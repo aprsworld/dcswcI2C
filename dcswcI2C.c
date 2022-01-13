@@ -66,6 +66,7 @@ struct_config config={0};
 struct_current current={0};
 struct_time_keep timers={0};
 
+#include "i2c_access_dcswcI2C.c"
 #include "uart_sc16is740_dcswcI2C.c"
 #include "mcp3208_dcswcI2C.c"
 #include "interrupt_dcswcI2C.c"
@@ -170,6 +171,7 @@ int8 get_ack_status(int8 address) {
 
 void main(void) {
 	int8 i,j;
+	int16 l;
 
 	init();
 	read_param_file();
@@ -311,7 +313,37 @@ void main(void) {
 			}
 
 			current.restart_now=0;
+
+
+#if 1
+			/* read a block of bytes from device */
+			i2c_start();
+			delay_us(15);
+			i2c_write(0x36);
+			i2c_write(0); /* register address 0 */
+			i2c_start();
+			delay_us(15);
+			i2c_write(0x36 | 1); /* read */
 			
+			for ( i=0 ; i<16 ; i++ ) {
+				j=i2c_read(1);
+
+				fprintf(STREAM_WORLD,"# byte addr[0x%02x]=0x%02x (%u)\r\n",
+					i,
+					j,
+					j
+				);
+			}
+			i2c_read(0);
+#endif
+
+#if 1
+			/* 16 bit registers, but byte addressed */
+			for ( i=4 ; i<8 ; i ++ ) {
+				l=i2c_register_read16(0x36,i);
+				fprintf(STREAM_WORLD,"# reg addr[0x%02x]=0x%04lx (%lu)\r\n",i,l,l);
+			}
+#endif
 
 			output_toggle(CTRL_0);
 
