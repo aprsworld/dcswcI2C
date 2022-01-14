@@ -172,6 +172,7 @@ int8 get_ack_status(int8 address) {
 void main(void) {
 	int8 i,j;
 	int16 l;
+	int16 n=0;
 
 	init();
 	read_param_file();
@@ -229,7 +230,6 @@ void main(void) {
 		current.p_on[i]=config.ch[i].startup;
 	}
 #endif
-
 
 	i=0;
 	for ( ; ; ) {
@@ -307,6 +307,9 @@ void main(void) {
 #if 1
 		if ( current.restart_now ) {
 			timers.led_on_green=200;
+
+			output_high(CTRL_0);
+
 			fprintf(STREAM_WORLD,"# you said '%c'\r\n",current.restart_now);
 			if ( config.uart_sc_sbd ) {
 				uart_putc(current.restart_now);
@@ -315,7 +318,7 @@ void main(void) {
 			current.restart_now=0;
 
 
-#if 1
+#if 0
 			/* read a block of bytes from device */
 			i2c_start();
 			delay_us(15);
@@ -339,16 +342,23 @@ void main(void) {
 
 #if 1
 			/* 16 bit registers, but byte addressed */
-			for ( i=4 ; i<8 ; i ++ ) {
+			for ( i=0 ; i<18 ; i ++ ) {
 				l=i2c_register_read16(0x36,i);
 				fprintf(STREAM_WORLD,"# reg addr[0x%02x]=0x%04lx (%lu)\r\n",i,l,l);
 			}
 #endif
 
-			output_toggle(CTRL_0);
+#if 0
+			fprintf(STREAM_WORLD,"# writing 0x%04lx to register 1\r\n",n);
+			i2c_register_write16(0x36,1,n);
+			n+=200;
+#endif
+			output_low(CTRL_0);
 
 		}
 #endif
+
+
 
 		
 	}
