@@ -16,9 +16,6 @@ void isr_10ms(void) {
 	if ( adc_ch >= 16 ) 
 		adc_ch=0;
 
-	/* LVD / HVD flag */
-	current.decide_now=1;
-
 
 	/* ticks(?) since last query */
 	if ( current.interval_milliseconds < 65525 ) {

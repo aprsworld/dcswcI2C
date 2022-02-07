@@ -34,8 +34,6 @@ file_006=.
 file_007=.
 file_008=.
 file_009=.
-file_010=.
-file_011=.
 [GENERATED_FILES]
 file_000=no
 file_001=no
@@ -47,8 +45,6 @@ file_006=no
 file_007=no
 file_008=no
 file_009=no
-file_010=no
-file_011=no
 [OTHER_FILES]
 file_000=no
 file_001=no
@@ -60,21 +56,17 @@ file_006=yes
 file_007=yes
 file_008=yes
 file_009=yes
-file_010=yes
-file_011=yes
 [FILE_INFO]
 file_000=C:\Users\James Jarvis\Desktop\planetPrecision\dcswcI2C\dcswcI2C.c
 file_001=dcswcI2C.h
 file_002=filter_dcswcI2C.c
 file_003=interrupt_dcswcI2C.c
-file_004=modbus_handler_dcswcI2C.c
-file_005=modbus_slave_dcswcI2C.c
-file_006=param_dcswcI2C.c
-file_007=C:\Users\James Jarvis\Desktop\planetPrecision\dcswcI2C\dcswcI2C.SYM
-file_008=C:\Users\James Jarvis\Desktop\planetPrecision\dcswcI2C\dcswcI2C.TRE
-file_009=i2c_addresses.h
-file_010=uart_sc16is740_dcswcI2C.c
-file_011=i2c_access_dcswcI2C.c
+file_004=param_dcswcI2C.c
+file_005=C:\Users\James Jarvis\Desktop\planetPrecision\dcswcI2C\dcswcI2C.SYM
+file_006=C:\Users\James Jarvis\Desktop\planetPrecision\dcswcI2C\dcswcI2C.TRE
+file_007=i2c_addresses.h
+file_008=uart_sc16is740_dcswcI2C.c
+file_009=i2c_access_dcswcI2C.c
 [SUITE_INFO]
 suite_guid={BA86BF99-4C07-4CE2-A9E7-C2A337910996}
 suite_state=

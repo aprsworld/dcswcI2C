@@ -2,21 +2,6 @@
 
 
 typedef struct {
-	int8 startup;
-
-	int16 off_below_adc;
-	int16 off_below_delay;
-	int16 on_above_adc;
-	int16 on_above_delay;
-	int16 override_timeout;
-	int16 switch_type;
-
-	signed int8 i_mon_offset; /* applied in addition to config.adc_offset */
-	int8 adc_channel; /* which ADC channel (0 to 15) for LVD and HVD */
-	int8 invert;
-} struct_output_channel;
-
-typedef struct {
 	int8 revision;
 	int8 modbus_address;
 	int8 modbus_mode;
@@ -24,33 +9,19 @@ typedef struct {
 	int8 serial_prefix;
 	int16 serial_number;
 
-	struct_output_channel ch[5];
-	signed int8 adc_offset[16];
-
 	int8 uart_sc_sbd;
 } struct_config;
 
 
 typedef struct {
-	int16 modbus_our_packets;
-	int16 modbus_other_packets;
-	int16 modbus_last_error;
-
 	int16 sequence_number;
 	int16 uptime_minutes;
 	int16 interval_milliseconds;
 
 	int8 factory_unlocked;
 
-	int8 p_on[5];
 	int16 adc[16];
 	
-	int16 on_delay[5];
-	int16 off_delay[5];
-	int16 override_timeout[5];
-
-
-	int8 decide_now;
 	int8 restart_now;
 	int8 adc_sample_ch;
 } struct_current;
@@ -72,15 +43,11 @@ struct_time_keep timers={0};
 #include "interrupt_dcswcI2C.c"
 #include "param_dcswcI2C.c"
 
-#include "modbus_slave_dcswcI2C.c"
-#include "modbus_handler_dcswcI2C.c"
 
 #include "filter_dcswcI2C.c"
 
 
 void init() {
-	int8 i;
-
 	setup_oscillator(OSC_8MHZ || OSC_INTRC); 
 //	setup_adc(ADC_CLOCK_INTERNAL);
 	setup_adc_ports(NO_ANALOGS);
@@ -109,21 +76,11 @@ void init() {
 	timers.led_on_green=0;
 	timers.led_on_red=0;
 
-	current.modbus_our_packets=0;
-	current.modbus_other_packets=0;
-	current.modbus_last_error=0;
 	current.sequence_number=0;
 	current.uptime_minutes=0;
 	current.interval_milliseconds=0;
 	current.factory_unlocked=0;
 	current.restart_now=0;
-
-	for ( i=0 ; i<5 ; i++ ) {
-		current.on_delay[i]=config.ch[i].on_above_delay;
-		current.off_delay[i]=config.ch[i].off_below_delay;
-		current.override_timeout[i]=0;
-	}
-
 
 
 	/* interrupts */
@@ -172,7 +129,6 @@ int8 get_ack_status(int8 address) {
 void main(void) {
 	int8 i,j;
 	int16 l;
-	int16 n=0;
 
 	init();
 	read_param_file();
@@ -181,16 +137,11 @@ void main(void) {
 		write_default_param_file();
 	}
 
-	/* start out Modbus slave */
-	setup_uart(TRUE);
-	/* modbus_init turns on global interrupts */
-	modbus_init();
-	/* modbus initializes @ 9600 */
 
 	/* prime filters */
 	for ( i=0 ; i<20 ; i++ ) {
 		for ( j=0 ; j<16 ; j++ ) {
-			current.adc[j]=mean_filter_n(j,mcp3208_read(j) + config.adc_offset[j]);
+			current.adc[j]=mean_filter_n(j,mcp3208_read(j));
 		}
 	}
 
@@ -235,74 +186,10 @@ void main(void) {
 	for ( ; ; ) {
 		restart_wdt();
 
-#if 0
-		/* set the output bits to reflect their requested state */
-		output_bit(CTRL_0,config.ch[0].invert ^ current.p_on[0]);
-		output_bit(CTRL_1,config.ch[1].invert ^ current.p_on[1]);
-		output_bit(CTRL_2,config.ch[2].invert ^ current.p_on[2]);
-		output_bit(CTRL_3,config.ch[3].invert ^ current.p_on[3]);
-		output_bit(CTRL_4,config.ch[4].invert ^ current.p_on[4]);
-
-		modbus_process();
-#endif
-
-#if 0
-		if ( current.adc_sample_ch != 0xff ) {
-			/* read ADC (voltage) and add our offset */
-//			current.adc[current.adc_sample_ch]=mcp3208_read(current.adc_sample_ch) + config.adc_offset[current.adc_sample_ch];
-			current.adc[current.adc_sample_ch]=mean_filter_n(current.adc_sample_ch,mcp3208_read(current.adc_sample_ch) + config.adc_offset[current.adc_sample_ch]);
-	
-			/* read the next channel (current) as soon as possible */
-			current.adc_sample_ch++;
-//			current.adc[current.adc_sample_ch]=mcp3208_read(current.adc_sample_ch) + config.adc_offset[current.adc_sample_ch];
-			current.adc[current.adc_sample_ch]=mean_filter_n(current.adc_sample_ch,mcp3208_read(current.adc_sample_ch) + config.adc_offset[current.adc_sample_ch]);
-
-			/* wait until timer interrupt gives another sample flag */
-			current.adc_sample_ch=0xff;
-		}
-#endif
-
-#if 0
-		if ( current.decide_now ) {
-			current.decide_now=0;
-
-			for ( i=0 ; i<5 ; i++ ) {
-				if ( current.override_timeout[i] > 0 ) {
-					current.override_timeout[i]--;
-					continue;
-				}
-
-				if ( config.ch[i].adc_channel < 15 && current.adc[config.ch[i].adc_channel] > config.ch[i].on_above_adc ) {
-					if ( current.on_delay[i] > 0 ) {
-						current.on_delay[i]--;
-					} else {
-						current.p_on[i]=1;
-					}
-				} else {
-					current.on_delay[i]=config.ch[i].on_above_delay;
-				}
-			
-
-				if ( config.ch[i].adc_channel < 15 && current.adc[config.ch[i].adc_channel] < config.ch[i].off_below_adc ) {
-					if ( current.off_delay[i] > 0 ) {
-						current.off_delay[i]--;
-					} else {
-						current.p_on[i]=0;
-					}
-				} else {
-					current.off_delay[i]=config.ch[i].off_below_delay;
-				}
-			}
-		}
-#endif
-
-
-
 			if ( config.uart_sc_sbd && uart_kbhit() ) {
 				fprintf(STREAM_WORLD,"# RockBLOCK says: '%c'\r\n",uart_getc());	
 			}
 			
-
 
 #if 1
 		if ( current.restart_now ) {
